@@ -4,44 +4,43 @@ import folium
 from streamlit_folium import st_folium
 import random
 from datetime import datetime
+import urllib.parse
 
-# Page Configuration for Enterprise Command Center Look
+# Page Configuration
 st.set_page_config(
-    page_title="CanopyRx | National Health Climate Intelligence",
+    page_title="Mediclim | National Health Climate Intelligence",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Styling to elevate UI from "basic" to "Enterprise Command Portal"
+# Custom Enterprise Styling
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
     .stMetric { background-color: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; }
-    .stAlert { border-radius: 6px; }
-    h1, h2, h3 { font-family: 'Inter', sans-serif; }
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State for Real-Time Dispatch Audit Ledger
+# Initialize Session State for Real-Time Audit Ledger
 if "audit_logs" not in st.session_state:
     st.session_state.audit_logs = [
         {
             "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
             "District": "Nashik", 
-            "Sub-Division / Taluka": "Nashik Taluka (Urban)", 
-            "Target Entity": "Panchavati Ward", 
+            "Taluka / Zone": "Nashik Taluka (Urban)", 
+            "Entity": "Panchavati Ward", 
             "Hazard": "Extreme Heat", 
             "Action Triggered": "Automated ORS Prepositioning SMS", 
             "Status": "✅ Dispatched (142 ASHA Units)"
         }
     ]
 
-# Header Section
+# Header
 st.markdown("### 🏛️ Government of Maharashtra — Public Health Department & State Climate Cell")
 st.markdown("## **CanopyRx: Multi-Hazard Climate-Health Early Warning & Dispatch Platform**")
 st.markdown("---")
 
-# Comprehensive Official Administrative Hierarchy (Strictly per Government Records)
+# Comprehensive Administrative Hierarchy
 administrative_data = {
     "Nashik": {
         "lat": 19.9975, "lon": 73.7898,
@@ -81,11 +80,9 @@ administrative_data = {
     }
 }
 
-# Sidebar Command Controls
+# Sidebar Navigation
 st.sidebar.header("🗺️ Administrative Navigation")
 selected_district = st.sidebar.selectbox("Select District", list(administrative_data.keys()))
-
-# District level details
 d_info = administrative_data[selected_district]
 selected_taluka_zone = st.sidebar.selectbox("Select Taluka / Sub-Division / Zone", list(d_info["talukas_or_zones"].keys()))
 selected_specific_unit = st.sidebar.selectbox("Select Specific Ward / Village Cluster", d_info["talukas_or_zones"][selected_taluka_zone])
@@ -98,7 +95,7 @@ hazard_focus = st.sidebar.selectbox("Hazard Focus", [
     "💧 Water Contamination Index"
 ])
 
-# Top Metrics Bar (Dynamically changes with selected zone)
+# Metrics Bar
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Selected Jurisdiction", selected_specific_unit, selected_district)
 col2.metric("Predicted Risk Index", f"{random.randint(65, 92)}.4 / 100", "Critical ⚠️", delta_color="inverse")
@@ -107,16 +104,13 @@ col4.metric("Response Lead Time", "48 Hours", "Pre-emptive Protocol")
 
 st.markdown("---")
 
-# Main Dashboard Grid: Spatial Map (Left) & Live Telemetry Simulation Engine (Right)
+# Main Grid Layout
 map_col, control_col = st.columns([1.3, 1])
 
 with map_col:
     st.subheader(f"📍 Spatial GIS Telemetry Map — {selected_district}")
     
-    # Interactive Map centered on selected district coordinates
-    m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="CartoDB dark_matter")
-    
-    # Render markers for all units in the selected taluka
+    m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="OpenStreetMap")
     units_in_zone = d_info["talukas_or_zones"][selected_taluka_zone]
     for i, unit_name in enumerate(units_in_zone):
         lat_offset = d_info["lat"] + ((i % 3) * 0.02 - 0.02)
@@ -142,7 +136,6 @@ with control_col:
     st.subheader("⚡ Live Multi-Parameter Telemetry Engine")
     st.markdown(f"**Target Entity:** `{selected_specific_unit} ({selected_taluka_zone})`")
     
-    # Dynamic live simulation inputs
     param_temp_rain = st.slider("Observed Environmental Index (Temp °C / Rainfall mm / AQI)", 25.0, 55.0, float(random.randint(40, 46)))
     syndromic_count = st.slider("Weekly Syndromic Reports (Fever / Dehydration Cases)", 0, 100, random.randint(12, 35))
     
@@ -153,7 +146,7 @@ with control_col:
             
             if computed_risk_score > 45:
                 status_text = f"🚨 CRITICAL ALERT: Threshold Breached (Score: {computed_risk_score:.1f})"
-                action_text = f"Automated SMS/IVR dispatched to {selected_specific_unit} health network; ORS/Medical inventory pre-positioning triggered."
+                action_text = f"Automated SMS/IVR broadcast & ORS pre-positioning dispatched to {selected_specific_unit}."
                 st.error(status_text)
                 st.warning(action_text)
             else:
@@ -161,20 +154,33 @@ with control_col:
                 action_text = "Routine epidemiological monitoring active."
                 st.success(status_text)
                 
-            # INSTANT REAL-TIME UPDATE TO AUDIT LEDGER (Session State Write)
+            # Instant Real-Time Ledger Update
             new_log_entry = {
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "District": selected_district,
-                "Sub-Division / Taluka": selected_taluka_zone,
-                "Target Entity": selected_specific_unit,
+                "Taluka / Zone": selected_taluka_zone,
+                "Entity": selected_specific_unit,
                 "Hazard": hazard_focus.split(" ")[1],
                 "Action Triggered": action_text[:45] + "...",
                 "Status": "⚡ Live Dispatched"
             }
             st.session_state.audit_logs.insert(0, new_log_entry)
-            st.rerun() # Forces instant UI refresh to display change in real time
+            st.rerun()
 
-# Bottom Section: Real-Time Government Compliance & Dispatch Audit Ledger
+    # Integrated Zero-Cost SMS & IVR Simulator Widget
+    st.markdown("---")
+    st.subheader("📱 Frontline Telephony Gateway (SMS / IVR)")
+    msg_text = f"[CanopyRx Alert] Critical {hazard_focus.split(' ')[1]} warning for {selected_specific_unit}, {selected_taluka_zone}. Pre-position medical supplies immediately."
+    encoded_msg = urllib.parse.quote(msg_text)
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown(f"[📲 Test SMS Dispatch Link](https://wa.me/?text={encoded_msg})", unsafe_allow_html=True)
+    with col_b:
+        if st.button("🔊 Simulate IVR Voice Call Broadcast"):
+            st.info("📞 Outbound IVR audio triggered: *'Attention ASHA unit, heat-stress surge warning active for your sector. Please initiate hydration advisories.'*")
+
+# Bottom Section: Real-Time Government Compliance Audit Ledger
 st.markdown("---")
 st.subheader("📋 Government Compliance & Real-Time Dispatch Audit Ledger")
 st.markdown("*Every simulation executed by any user across the deployment network logs instantly below in real time for compliance verification.*")
