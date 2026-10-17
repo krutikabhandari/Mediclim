@@ -145,17 +145,29 @@ with control_col:
     st.markdown("### ⚡ Live Telemetry Engine")
     st.markdown(f"**Target Entity:** `{selected_specific_unit}`")
     
-    param_temp_rain = st.slider("Environmental Index (Temp °C / Rainfall mm / AQI)", 25.0, 55.0, float(random.randint(41, 47)))
-    syndromic_count = st.slider("Weekly Syndromic Reports (Fever / Dehydration)", 0, 100, random.randint(15, 38))
-    
-    computed_risk_score = (param_temp_rain * 0.5) + (syndromic_count * 1.2)
+    # DYNAMIC TELEMETRY INPUTS & FORMULAS BASED ON HAZARD FOCUS
+    if "Heat" in hazard_focus:
+        env_val = st.slider("Observed Temperature (°C)", 30.0, 50.0, 42.0)
+        syndromic_val = st.slider("Dehydration / Heat Exhaustion Cases", 0, 100, 18)
+        computed_risk_score = (env_val * 0.6) + (syndromic_val * 1.2)
+        action_desc = "Automated ORS Prepositioning & Cooling Advisories Dispatched."
+    elif "Vector" in hazard_focus:
+        env_val = st.slider("Cumulative Rainfall (mm / Last 7 Days)", 0.0, 250.0, 85.0)
+        syndromic_val = st.slider("Fever / Malaria / Dengue Reports", 0, 100, 22)
+        computed_risk_score = (env_val * 0.3) + (syndromic_val * 2.0)
+        action_desc = "Fogging Teams & Larvicide Spraying Protocols Dispatched."
+    else:  # Water
+        env_val = st.slider("Water Turbidity / Contamination Index (1-10)", 1.0, 10.0, 7.0)
+        syndromic_val = st.slider("Gastroenteritis / Diarrhea Reports", 0, 100, 15)
+        computed_risk_score = (env_val * 5.0) + (syndromic_val * 1.8)
+        action_desc = "Chlorine Tablet Distribution & Boiling Advisories Dispatched."
 
     if st.button("Execute Predictive Simulation & Trigger Real-Time Dispatch", type="primary"):
         with st.spinner("Processing spatial telemetry matrix..."):
             
             if computed_risk_score > 45:
                 status_text = f"CRITICAL ALERT: Threshold Breached (Score: {computed_risk_score:.1f})"
-                action_text = f"Automated SMS/IVR dispatched to {selected_specific_unit}."
+                action_text = f"{action_desc} Target: {selected_specific_unit}."
                 st.error(status_text)
                 st.warning(action_text)
             else:
@@ -179,7 +191,7 @@ with control_col:
     st.markdown("---")
     st.markdown("### 📱 Frontline Telephony Gateway (SMS / IVR)")
     
-    plain_msg = f"[Ecodemic Alert] Critical warning for {selected_specific_unit}, {selected_taluka_zone}. Initiate preventive health actions immediately."
+    plain_msg = f"[Ecodemic Alert] Critical {hazard_focus.split(' ')[1]} warning for {selected_specific_unit}, {selected_taluka_zone}. Initiate preventive field actions."
     encoded_wa = urllib.parse.quote(plain_msg)
     wa_url = f"https://api.whatsapp.com/send?text={encoded_wa}"
     
@@ -188,7 +200,7 @@ with control_col:
         st.markdown(f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25d366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 Send WhatsApp Alert</button></a>', unsafe_allow_html=True)
     with col_b:
         if st.button("📞 Trigger IVR Call"):
-            st.warning("🔊 Outbound Marathi IVR call connected: *'नमस्कार, आपल्या भागात हवामानाचा धोका निर्माण झाला आहे.'*")
+            st.warning(f"🔊 Outbound Marathi IVR call connected for {hazard_focus.split(' ')[1]}: *'नमस्कार, आपल्या भागात आरोग्य धोका निर्माण झाला आहे.'*")
             if len(st.session_state.audit_logs) > 0:
                 st.session_state.audit_logs[0]["Response Status"] = "[SUCCESS] Completed via IVR Call"
             st.rerun()
@@ -205,7 +217,7 @@ st.markdown("### 📋 Government Compliance & Real-Time Dispatch Audit Ledger")
 log_df = pd.DataFrame(st.session_state.audit_logs)
 st.dataframe(log_df, use_container_width=True, hide_index=True)
 
-# Clean ASCII PDF Generator (Sanitizes characters to prevent encoding errors)
+# Clean ASCII PDF Generator
 def create_pdf(df):
     pdf = FPDF()
     pdf.add_page()
@@ -224,7 +236,6 @@ def create_pdf(df):
     
     pdf.set_font("Arial", "", 7)
     for index, row in df.iterrows():
-        # Remove any non-latin or unicode characters to avoid UnicodeEncodeError
         ts = re.sub(r'[^\x00-\x7F]+', '', str(row["Timestamp"]))
         dist = re.sub(r'[^\x00-\x7F]+', '', str(row["District"]))
         ent = re.sub(r'[^\x00-\x7F]+', '', str(row["Entity"]))
