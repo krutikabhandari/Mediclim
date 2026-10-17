@@ -6,6 +6,7 @@ import random
 from datetime import datetime
 import urllib.parse
 from fpdf import FPDF
+import re
 
 # Page Configuration
 st.set_page_config(
@@ -36,7 +37,7 @@ if "audit_logs" not in st.session_state:
             "Entity": "Panchavati Ward", 
             "Hazard": "Extreme Heat", 
             "Action Triggered": "Automated ORS Prepositioning SMS", 
-            "Response Status": "✅ Acknowledged & Executed"
+            "Response Status": "[OK] Acknowledged & Executed"
         }
     ]
 
@@ -118,7 +119,6 @@ map_col, control_col = st.columns([1.2, 1])
 with map_col:
     st.markdown(f"### 📍 Spatial GIS Map — {selected_district}")
     
-    # Safe Leaflet OpenStreetMap tiles (No API key needed, zero black boxes)
     m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="OpenStreetMap")
     units_in_zone = d_info["talukas_or_zones"][selected_taluka_zone]
     for i, unit_name in enumerate(units_in_zone):
@@ -154,12 +154,12 @@ with control_col:
         with st.spinner("Processing spatial telemetry matrix..."):
             
             if computed_risk_score > 45:
-                status_text = f"🚨 CRITICAL ALERT: Threshold Breached (Score: {computed_risk_score:.1f})"
+                status_text = f"CRITICAL ALERT: Threshold Breached (Score: {computed_risk_score:.1f})"
                 action_text = f"Automated SMS/IVR dispatched to {selected_specific_unit}."
                 st.error(status_text)
                 st.warning(action_text)
             else:
-                status_text = f"🟢 Stable Environment (Score: {computed_risk_score:.1f})"
+                status_text = f"Stable Environment (Score: {computed_risk_score:.1f})"
                 action_text = "Routine epidemiological surveillance active."
                 st.success(status_text)
                 
@@ -170,7 +170,7 @@ with control_col:
                 "Entity": selected_specific_unit,
                 "Hazard": hazard_focus.split(" ")[1],
                 "Action Triggered": action_text[:40] + "...",
-                "Response Status": "⏳ Pending Field Response..."
+                "Response Status": "[PENDING] Field Response..."
             }
             st.session_state.audit_logs.insert(0, new_log_entry)
             st.rerun()
@@ -179,7 +179,6 @@ with control_col:
     st.markdown("---")
     st.markdown("### 📱 Frontline Telephony Gateway (SMS / IVR)")
     
-    # English-safe fallback message encoding for WhatsApp URL to prevent encoding faults
     plain_msg = f"[Ecodemic Alert] Critical warning for {selected_specific_unit}, {selected_taluka_zone}. Initiate preventive health actions immediately."
     encoded_wa = urllib.parse.quote(plain_msg)
     wa_url = f"https://api.whatsapp.com/send?text={encoded_wa}"
@@ -191,12 +190,12 @@ with control_col:
         if st.button("📞 Trigger IVR Call"):
             st.warning("🔊 Outbound Marathi IVR call connected: *'नमस्कार, आपल्या भागात हवामानाचा धोका निर्माण झाला आहे.'*")
             if len(st.session_state.audit_logs) > 0:
-                st.session_state.audit_logs[0]["Response Status"] = "✅ Completed via IVR Call"
+                st.session_state.audit_logs[0]["Response Status"] = "[SUCCESS] Completed via IVR Call"
             st.rerun()
 
     if st.button("Simulate Incoming ASHA Field Response"):
         if len(st.session_state.audit_logs) > 0:
-            st.session_state.audit_logs[0]["Response Status"] = "✅ Confirmed by ASHA Worker (Action Taken)"
+            st.session_state.audit_logs[0]["Response Status"] = "[CONFIRMED] ASHA Worker Action Taken"
         st.rerun()
 
 # Bottom Section: Real-Time Audit Ledger
@@ -206,7 +205,7 @@ st.markdown("### 📋 Government Compliance & Real-Time Dispatch Audit Ledger")
 log_df = pd.DataFrame(st.session_state.audit_logs)
 st.dataframe(log_df, use_container_width=True, hide_index=True)
 
-# Safe ASCII PDF Generator (Avoids latin1 encoding crashes completely)
+# Clean ASCII PDF Generator (Sanitizes characters to prevent encoding errors)
 def create_pdf(df):
     pdf = FPDF()
     pdf.add_page()
@@ -225,11 +224,18 @@ def create_pdf(df):
     
     pdf.set_font("Arial", "", 7)
     for index, row in df.iterrows():
-        pdf.cell(col_widths[0], 6, str(row["Timestamp"]), 1)
-        pdf.cell(col_widths[1], 6, str(row["District"]), 1)
-        pdf.cell(col_widths[2], 6, str(row["Entity"]), 1)
-        pdf.cell(col_widths[3], 6, str(row["Hazard"]), 1)
-        pdf.cell(col_widths[4], 6, str(row["Response Status"]), 1)
+        # Remove any non-latin or unicode characters to avoid UnicodeEncodeError
+        ts = re.sub(r'[^\x00-\x7F]+', '', str(row["Timestamp"]))
+        dist = re.sub(r'[^\x00-\x7F]+', '', str(row["District"]))
+        ent = re.sub(r'[^\x00-\x7F]+', '', str(row["Entity"]))
+        haz = re.sub(r'[^\x00-\x7F]+', '', str(row["Hazard"]))
+        stat = re.sub(r'[^\x00-\x7F]+', '', str(row["Response Status"]))
+        
+        pdf.cell(col_widths[0], 6, ts, 1)
+        pdf.cell(col_widths[1], 6, dist, 1)
+        pdf.cell(col_widths[2], 6, ent, 1)
+        pdf.cell(col_widths[3], 6, haz, 1)
+        pdf.cell(col_widths[4], 6, stat, 1)
         pdf.ln()
         
     return pdf.output(dest="S").encode("latin1")
