@@ -5,6 +5,8 @@ from streamlit_folium import st_folium
 import random
 from datetime import datetime
 import urllib.parse
+from fpdf import FPDF
+import base64
 
 # Page Configuration for Premium Government SaaS Look
 st.set_page_config(
@@ -13,18 +15,19 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Premium CSS Styling (Inspired by Seva Civic-Tech Portals)
+# Custom Enterprise Styling & Font Fixes (Clean, responsive card layout, no clipping)
 st.markdown("""
     <style>
     .main { background-color: #0b0f19; color: #f3f4f6; }
-    .stMetric { background-color: #111827; padding: 18px; border-radius: 12px; border: 1px solid #1f2937; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .stSelectbox, .stSlider { background-color: #111827; border-radius: 8px; }
-    h1, h2, h3 { font-family: 'Inter', sans-serif; letter-spacing: -0.025em; }
-    .brand-banner { background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; }
+    .stMetric { background-color: #111827; padding: 14px; border-radius: 10px; border: 1px solid #1f2937; overflow: hidden; text-overflow: ellipsis; }
+    .stMetric label { font-size: 13px !important; color: #9ca3af !important; }
+    .stMetric div[data-testid="stMetricValue"] { font-size: 20px !important; color: #ffffff !important; }
+    .brand-banner { background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%); padding: 18px; border-radius: 12px; margin-bottom: 20px; }
+    .stButton button { width: 100%; border-radius: 8px; font-weight: 600; }
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State for Real-Time Dispatch Audit Ledger
+# Initialize Session State for Real-Time Audit Ledger & Response Tracking
 if "audit_logs" not in st.session_state:
     st.session_state.audit_logs = [
         {
@@ -34,7 +37,7 @@ if "audit_logs" not in st.session_state:
             "Entity": "Panchavati Ward", 
             "Hazard": "Extreme Heat", 
             "Action Triggered": "Automated ORS Prepositioning SMS", 
-            "Status": "✅ Dispatched (142 ASHA Units)"
+            "Response Status": "✅ Acknowledged & Executed in Marathi"
         }
     ]
 
@@ -42,11 +45,11 @@ if "audit_logs" not in st.session_state:
 st.markdown("""
     <div class="brand-banner">
         <h2 style="color: white; margin: 0; font-weight: 700;">🌐 ECODEMIC</h2>
-        <p style="color: #93c5fd; margin: 5px 0 0 0; font-size: 16px;">Multi-Hazard Climate-Health Early Warning & Dispatch Intelligence Platform</p>
+        <p style="color: #93c5fd; margin: 4px 0 0 0; font-size: 15px;">Multi-Hazard Climate-Health Early Warning & Dispatch Intelligence Platform</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Comprehensive Administrative Hierarchy (Strictly per Government Records)
+# Administrative Hierarchy Data
 administrative_data = {
     "Nashik": {
         "lat": 19.9975, "lon": 73.7898,
@@ -90,8 +93,8 @@ administrative_data = {
 st.sidebar.markdown("### 🎛️ Command Center Controls")
 selected_district = st.sidebar.selectbox("Select District", list(administrative_data.keys()))
 d_info = administrative_data[selected_district]
-selected_taluka_zone = st.sidebar.selectbox("Select Taluka / Sub-Division / Zone", list(d_info["talukas_or_zones"].keys()))
-selected_specific_unit = st.sidebar.selectbox("Select Specific Ward / Village Cluster", d_info["talukas_or_zones"][selected_taluka_zone])
+selected_taluka_zone = st.sidebar.selectbox("Select Taluka / Zone", list(d_info["talukas_or_zones"].keys()))
+selected_specific_unit = st.sidebar.selectbox("Select Ward / Village Cluster", d_info["talukas_or_zones"][selected_taluka_zone])
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ⚙️ Telemetry Parameters")
@@ -101,58 +104,59 @@ hazard_focus = st.sidebar.selectbox("Hazard Focus", [
     "💧 Water Contamination Index"
 ])
 
-# Premium Top Metrics Bar
+# Metrics Bar with text clipping protection
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Selected Jurisdiction", selected_specific_unit, selected_district)
-col2.metric("Predicted Risk Index", f"{random.randint(68, 94)}.2 / 100", "Critical Alert ⚠️", delta_color="inverse")
-col3.metric("Linked ASHA Units", f"{random.randint(50, 190)} Workers", "Active Live Feed")
-col4.metric("Pre-emptive Lead Time", "48 Hours", "Automated Protocol")
+col1.metric("Jurisdiction", selected_specific_unit[:14] + ".." if len(selected_specific_unit)>14 else selected_specific_unit, selected_district)
+col2.metric("Predicted Risk", f"{random.randint(68, 94)}.2 / 100", "Critical ⚠️", delta_color="inverse")
+col3.metric("Linked ASHA", f"{random.randint(50, 190)} Workers", "Active Live")
+col4.metric("Lead Time", "48 Hours", "Pre-emptive")
 
 st.markdown("---")
 
-# Main Grid Layout: Interactive GIS Map & Live Simulation Engine
-map_col, control_col = st.columns([1.3, 1])
+# Main Grid: Map & Telemetry Engine
+map_col, control_col = st.columns([1.2, 1])
 
 with map_col:
-    st.markdown(f"### 📍 Spatial GIS Telemetry Map — {selected_district}")
+    st.markdown(f"### 📍 Spatial GIS Map — {selected_district}")
     
-    m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="OpenStreetMap")
+    # Safe Light CartoDB Tiles (No black boxes, no API keys required)
+    m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="CartoDB positron")
     units_in_zone = d_info["talukas_or_zones"][selected_taluka_zone]
     for i, unit_name in enumerate(units_in_zone):
         lat_offset = d_info["lat"] + ((i % 3) * 0.02 - 0.02)
         lon_offset = d_info["lon"] + ((i // 3) * 0.02 - 0.02)
         
         is_selected = (unit_name == selected_specific_unit)
-        marker_color = "#ef4444" if is_selected else "#f59e0b"
-        marker_radius = 16 if is_selected else 10
+        marker_color = "#ef4444" if is_selected else "#3b82f6"
+        marker_radius = 14 if is_selected else 9
         
         folium.CircleMarker(
             location=[lat_offset, lon_offset],
             radius=marker_radius,
-            popup=f"<b>{unit_name}</b><br>Zone: {selected_taluka_zone}<br>Status: Active Monitoring",
+            popup=f"<b>{unit_name}</b><br>Zone: {selected_taluka_zone}",
             color=marker_color,
             fill=True,
             fill_color=marker_color,
-            fill_opacity=0.9
+            fill_opacity=0.85
         ).add_to(m)
         
-    st_folium(m, width=540, height=420)
+    st_folium(m, width=520, height=390, use_container_width=True)
 
 with control_col:
-    st.markdown("### ⚡ Live Multi-Parameter Telemetry Engine")
-    st.markdown(f"**Target Entity:** `{selected_specific_unit} ({selected_taluka_zone})`")
+    st.markdown("### ⚡ Live Telemetry Engine")
+    st.markdown(f"**Target Entity:** `{selected_specific_unit}`")
     
-    param_temp_rain = st.slider("Observed Environmental Index (Temp °C / Rainfall mm / AQI)", 25.0, 55.0, float(random.randint(41, 47)))
-    syndromic_count = st.slider("Weekly Syndromic Reports (Fever / Dehydration Cases)", 0, 100, random.randint(15, 38))
+    param_temp_rain = st.slider("Environmental Index (Temp °C / Rainfall mm / AQI)", 25.0, 55.0, float(random.randint(41, 47)))
+    syndromic_count = st.slider("Weekly Syndromic Reports (Fever / Dehydration)", 0, 100, random.randint(15, 38))
     
     computed_risk_score = (param_temp_rain * 0.5) + (syndromic_count * 1.2)
 
     if st.button("Execute Predictive Simulation & Trigger Real-Time Dispatch", type="primary"):
-        with st.spinner("Processing telemetry through spatial correlation matrix..."):
+        with st.spinner("Processing spatial telemetry matrix..."):
             
             if computed_risk_score > 45:
                 status_text = f"🚨 CRITICAL ALERT: Threshold Breached (Score: {computed_risk_score:.1f})"
-                action_text = f"Automated SMS/IVR broadcast & ORS inventory prepositioned for {selected_specific_unit}."
+                action_text = f"Automated Marathi SMS/IVR dispatched to {selected_specific_unit}."
                 st.error(status_text)
                 st.warning(action_text)
             else:
@@ -160,36 +164,90 @@ with control_col:
                 action_text = "Routine epidemiological surveillance active."
                 st.success(status_text)
                 
-            # Instant Real-Time Ledger Update
+            # Log with initial pending response
             new_log_entry = {
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "District": selected_district,
                 "Taluka / Zone": selected_taluka_zone,
                 "Entity": selected_specific_unit,
                 "Hazard": hazard_focus.split(" ")[1],
-                "Action Triggered": action_text[:45] + "...",
-                "Status": "⚡ Live Dispatched"
+                "Action Triggered": action_text[:40] + "...",
+                "Response Status": "⏳ Pending Field Response..."
             }
             st.session_state.audit_logs.insert(0, new_log_entry)
             st.rerun()
 
-    # Frontline Telephony Gateway Simulation Widget
+    # Telephony Dispatch & Bi-directional Real-Time Response Simulation
     st.markdown("---")
-    st.markdown("### 📱 Frontline Telephony Gateway (SMS / IVR)")
-    msg_text = f"[Ecodemic Alert] Critical {hazard_focus.split(' ')[1]} warning for {selected_specific_unit}, {selected_taluka_zone}. Initiate preventive field action."
-    encoded_msg = urllib.parse.quote(msg_text)
+    st.markdown("### 📱 Frontline Telephony Gateway (Marathi SMS / IVR)")
+    
+    # Authentic Marathi Warning Message
+    marathi_msg = f"[Ecodemic इशारा] {selected_specific_unit} येथे तीव्र {hazard_focus.split(' ')[1]}चा धोका आहे. तातडीने ओआरएस (ORS) आणि आरोग्य सेवा सुरू करा."
+    encoded_wa = urllib.parse.quote(marathi_msg)
+    
+    # Fully functional WhatsApp click handler (uses api.whatsapp.com for reliable universal desktop & mobile redirection)
+    wa_url = f"https://api.whatsapp.com/send?text={encoded_wa}"
     
     col_a, col_b = st.columns(2)
     with col_a:
-        st.markdown(f"[📲 Test SMS Dispatch Link](https://wa.me/?text={encoded_msg})", unsafe_allow_html=True)
+        st.markdown(f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25d366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 Send Marathi WhatsApp</button></a>', unsafe_allow_html=True)
     with col_b:
-        if st.button("🔊 Simulate IVR Voice Call"):
-            st.info("📞 Outbound IVR audio triggered: *'Attention ASHA unit, climate hazard warning active for your sector. Please initiate doorstep advisories.'*")
+        if st.button("📞 Trigger Marathi IVR Call"):
+            st.warning("🔊 Outbound IVR call initiated to ASHA worker: *'नमस्कार, आपल्या भागात हवामानाचा धोका निर्माण झाला आहे. कृपया ओआरएस वाटप सुरू करा.'*")
+            # Update latest log status in real-time to simulate worker acknowledgment
+            if len(st.session_state.audit_logs) > 0:
+                st.session_state.audit_logs[0]["Response Status"] = "✅ Acknowledged via Marathi IVR Call"
+            st.rerun()
 
-# Bottom Section: Real-Time Government Compliance Audit Ledger
+    # Interactive simulation button to mimic real-time incoming response from WhatsApp/SMS
+    if st.button("Simulate Incoming ASHA Field Response (OK / Acknowledged)"):
+        if len(st.session_state.audit_logs) > 0:
+            st.session_state.audit_logs[0]["Response Status"] = "✅ Confirmed by ASHA Worker (Action Taken)"
+        st.rerun()
+
+# Bottom Section: Real-Time Audit Ledger & PDF Export
 st.markdown("---")
 st.markdown("### 📋 Government Compliance & Real-Time Dispatch Audit Ledger")
-st.markdown("*Every simulation executed across the active pilot network logs instantly below in real time for compliance and verification.*")
+st.markdown("*Real-time event ledger tracking automated alerts and incoming frontline field responses.*")
 
 log_df = pd.DataFrame(st.session_state.audit_logs)
 st.dataframe(log_df, use_container_width=True, hide_index=True)
+
+# PDF Report Generation & Export Function
+def create_pdf(df):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "ECODEMIC - Government Compliance & Dispatch Report", 0, 1, "C")
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(0, 8, f"Generated On: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1, "C")
+    pdf.ln(10)
+    
+    pdf.set_font("Arial", "B", 9)
+    # Table headers
+    headers = ["Timestamp", "District", "Entity", "Hazard", "Response Status"]
+    col_widths = [38, 25, 38, 30, 60]
+    for i, h in enumerate(headers):
+        pdf.cell(col_widths[i], 8, h, 1, 0, "C")
+    pdf.ln()
+    
+    pdf.set_font("Arial", "", 8)
+    for index, row in df.iterrows():
+        pdf.cell(col_widths[0], 7, str(row["Timestamp"]), 1)
+        pdf.cell(col_widths[1], 7, str(row["District"]), 1)
+        pdf.cell(col_widths[2], 7, str(row["Entity"]), 1)
+        pdf.cell(col_widths[3], 7, str(row["Hazard"]), 1)
+        pdf.cell(col_widths[4], 7, str(row["Response Status"]), 1)
+        pdf.ln()
+        
+    return pdf.output(dest="S").encode("latin1")
+
+# Export Button
+pdf_bytes = create_pdf(log_df)
+st.download_button(
+    label="📥 Print / Download Official Audit Report (PDF)",
+    data=pdf_bytes,
+    file_name=f"Ecodemic_Audit_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+    mime="application/pdf",
+    type="secondary"
+)
