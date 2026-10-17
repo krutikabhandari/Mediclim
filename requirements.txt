@@ -2,7 +2,3 @@ streamlit
 pandas
 folium
 streamlit-folium
-st_folium
-random
-datetime
-urllib.parse
