@@ -7,6 +7,7 @@ from datetime import datetime
 import urllib.parse
 from fpdf import FPDF
 import re
+import streamlit.components.v1 as components
 
 # Page Configuration
 st.set_page_config(
@@ -46,11 +47,12 @@ translations = {
         "btn_exec": "Execute Predictive Simulation & Trigger Real-Time Dispatch",
         "telephony_title": "Frontline Telephony Gateway (Live SMS / IVR API)",
         "btn_wa": "Dispatch Live WhatsApp API",
-        "btn_ivr": "Trigger Live IVR Call",
+        "btn_ivr": "Trigger Live Voice IVR Call",
         "btn_sim": "Simulate Incoming ASHA Field Response",
         "ledger_title": "Government Compliance & Real-Time Dispatch Audit Ledger",
         "pdf_btn": "Print / Download Official Audit Report (PDF)",
-        "hazards": ["🔥 Heat-Stress & Dehydration Surge", "🦟 Vector-Borne Outbreak Risk", "💧 Water Contamination Index"]
+        "hazards": ["🔥 Heat-Stress & Dehydration Surge", "🦟 Vector-Borne Outbreak Risk", "💧 Water Contamination Index"],
+        "ivr_speech": "Alert from Ecodemic Command Center. Critical climate hazard detected in your sector. Please initiate emergency health advisories and ORS distribution immediately."
     },
     "Marathi": {
         "title": "इकोडेमिक (ECODEMIC)",
@@ -69,11 +71,12 @@ translations = {
         "btn_exec": "अंदाज सिमुलेशन चालवा आणि स्वयंचलित प्रेषण करा",
         "telephony_title": "फ्रंटलाईन टेलिफोनिक गेटवे (थेट एसएमएस / आयव्हीआर एपीआय)",
         "btn_wa": "थेट व्हॉट्सॲप मेसेज पाठवा",
-        "btn_ivr": "थेट आयव्हीआर कॉल (IVR) सुरू करा",
+        "btn_ivr": "थेट व्हॉइस आयव्हीआर कॉल (IVR) ऐका",
         "btn_sim": "आशा कर्मचाऱ्याचा प्रतिसाद तपासा",
         "ledger_title": "शासकीय अनुपालन आणि थेट प्रेषण ऑডিট लेजर",
         "pdf_btn": "अधिकृत ऑডিট अहवाल डाउनलोड करा (PDF)",
-        "hazards": ["🔥 उष्णतेचा लाट व निर्जलीकरण धोका", "🦟 कीटकजन्य आजार धोका", "💧 अशुद्ध पाणी संसर्ग धोका"]
+        "hazards": ["🔥 उष्णतेचा लाट व निर्जलीकरण धोका", "🦟 कीटकजन्य आजार धोका", "💧 अशुद्ध पाणी संसर्ग धोका"],
+        "ivr_speech": "इकोडेमिक कमांड सेंटरकडून तातडीचा इशारा. आपल्या भागात हवामानाचा धोका निर्माण झाला आहे. कृपया त्वरित ओआरएस वाटप आणि आरोग्य उपाययोजना सुरू करा."
     },
     "Hindi": {
         "title": "इकोडेमिक (ECODEMIC)",
@@ -92,15 +95,16 @@ translations = {
         "btn_exec": "भविष्यवाणी सिमुलेशन चलाएं और वास्तविक समय प्रेषण करें",
         "telephony_title": "फ्रंटलाइन टेलीफोनी गेटवे (लाइव एसएमएस / IVR API)",
         "btn_wa": "लाइव व्हाट्सएप संदेश भेजें",
-        "btn_ivr": "लाइव IVR कॉल ट्रिगर करें",
+        "btn_ivr": "लाइव वॉयस IVR कॉल सुनें",
         "btn_sim": "आशा कार्यकर्ता प्रतिक्रिया अनुकरण करें",
         "ledger_title": "सरकारी अनुपालन और वास्तविक समय प्रेषण ऑडिट लेज़र",
         "pdf_btn": "आधिकारिक ऑडिट रिपोर्ट डाउनलोड करें (PDF)",
-        "hazards": ["🔥 अत्यधिक गर्मी और डिहाइड्रेशन जोखिम", "🦟 वेक्टर जनित रोग जोखिम", "💧 जल संदूषण सूचकांक"]
+        "hazards": ["🔥 अत्यधिक गर्मी और डिहाइड्रेशन जोखिम", "🦟 वेक्टर जनित रोग जोखिम", "💧 जल संदूषण सूचकांक"],
+        "ivr_speech": "इकोडेमिक कमांड सेंटर से चेतावनी। आपके क्षेत्र में गंभीर जलवायु स्वास्थ्य जोखिम का पता चला है। कृपया तुरंत ओआरएस वितरण और निवारक उपाय शुरू करें।"
     }
 }
 
-# Language Selector in Sidebar Top
+# Language Selector
 selected_lang = st.sidebar.selectbox("🌐 Select Language / भाषा निवडा", ["English", "Marathi", "Hindi"])
 t = translations[selected_lang]
 
@@ -117,6 +121,10 @@ if "audit_logs" not in st.session_state:
             "Response Status": "[OK] Acknowledged & Executed"
         }
     ]
+
+# Session state tracker for IVR audio trigger
+if "trigger_ivr_audio" not in st.session_state:
+    st.session_state.trigger_ivr_audio = False
 
 # Premium Header Banner
 st.markdown(f"""
@@ -263,7 +271,6 @@ with control_col:
     st.markdown("---")
     st.markdown(f"### 📱 {t['telephony_title']}")
     
-    # Multilingual broadcast text generation
     if selected_lang == "Marathi":
         msg_text = f"[इकोडेमिक इशारा] {selected_specific_unit} येथे आरोग्य धोका निर्माण झाला आहे. तात्काळ ओआरएस (ORS) आणि उपाययोजना सुरू करा."
     elif selected_lang == "Hindi":
@@ -279,16 +286,33 @@ with control_col:
         st.markdown(f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25d366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 {t["btn_wa"]}</button></a>', unsafe_allow_html=True)
     with col_b:
         if st.button(f"📞 {t['btn_ivr']}"):
-            # Production IVR API integration hook (e.g., Exotel / Twilio Voice XML webhook simulation)
-            st.warning(f"🔊 Live IVR Telephony Gateway Triggered via Webhook: Outbound call dispatched to frontline ASHA team in {selected_specific_unit}.")
+            st.session_state.trigger_ivr_audio = True
             if len(st.session_state.audit_logs) > 0:
-                st.session_state.audit_logs[0]["Response Status"] = "[SUCCESS] Live IVR Call Connected"
+                st.session_state.audit_logs[0]["Response Status"] = "[SUCCESS] Live Voice IVR Call Played"
             st.rerun()
 
     if st.button(t["btn_sim"]):
         if len(st.session_state.audit_logs) > 0:
             st.session_state.audit_logs[0]["Response Status"] = "[CONFIRMED] ASHA Worker Action Taken"
         st.rerun()
+
+# LIVE BROWSER SPEECH SYNTHESIS ENGINE (Plays actual IVR audio out loud)
+if st.session_state.trigger_ivr_audio:
+    speech_text = t["ivr_speech"]
+    lang_code = "mr-IN" if selected_lang == "Marathi" else ("hi-IN" if selected_lang == "Hindi" else "en-US")
+    
+    # HTML/JS Web Speech API Component to broadcast audio on speakers
+    speech_html = f"""
+    <script>
+        const utterance = new SpeechSynthesisUtterance("{speech_text}");
+        utterance.lang = "{lang_code}";
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+    </script>
+    """
+    components.html(speech_html, height=0, width=0)
+    st.success(f"🔊 Live IVR Call Audio Broadcasting in **{selected_lang}** through speakers...")
+    st.session_state.trigger_ivr_audio = False # Reset trigger
 
 # Bottom Section: Real-Time Audit Ledger
 st.markdown("---")
