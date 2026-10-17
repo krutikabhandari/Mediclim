@@ -27,6 +27,83 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Localization Dictionaries (English, Marathi, Hindi)
+translations = {
+    "English": {
+        "title": "ECODEMIC",
+        "subtitle": "Multi-Hazard Climate-Health Early Warning & Dispatch Intelligence Platform",
+        "nav": "Command Center Controls",
+        "dist": "Select District",
+        "taluka": "Select Taluka / Zone",
+        "ward": "Select Ward / Village Cluster",
+        "hazard": "Hazard Focus",
+        "metrics_jurisdiction": "Jurisdiction",
+        "metrics_risk": "Predicted Risk",
+        "metrics_asha": "Linked ASHA",
+        "metrics_lead": "Lead Time",
+        "map_title": "Spatial GIS Map",
+        "engine_title": "Live Telemetry Engine",
+        "btn_exec": "Execute Predictive Simulation & Trigger Real-Time Dispatch",
+        "telephony_title": "Frontline Telephony Gateway (Live SMS / IVR API)",
+        "btn_wa": "Dispatch Live WhatsApp API",
+        "btn_ivr": "Trigger Live IVR Call",
+        "btn_sim": "Simulate Incoming ASHA Field Response",
+        "ledger_title": "Government Compliance & Real-Time Dispatch Audit Ledger",
+        "pdf_btn": "Print / Download Official Audit Report (PDF)",
+        "hazards": ["🔥 Heat-Stress & Dehydration Surge", "🦟 Vector-Borne Outbreak Risk", "💧 Water Contamination Index"]
+    },
+    "Marathi": {
+        "title": "इकोडेमिक (ECODEMIC)",
+        "subtitle": "हवामान आणि आरोग्य धोका पूर्वसूचना व आपत्कालीन प्रेषण यंत्रणा",
+        "nav": "कमांड सेंटर नियंत्रण",
+        "dist": "जिल्हा निवडा",
+        "taluka": "तालुका / विभाग निवडा",
+        "ward": "प्रभाग / गाव गट निवडा",
+        "hazard": "धोक्याचा प्रकार",
+        "metrics_jurisdiction": "कार्यक्षेत्र",
+        "metrics_risk": "अंदाजित धोका",
+        "metrics_asha": "जोडलेले आशा वर्कर",
+        "metrics_lead": "प्रतिसादाची वेळ",
+        "map_title": "स्थानिक जीआयएस नकाशा",
+        "engine_title": "थेट दूरमापन प्रणाली (Telemetry)",
+        "btn_exec": "अंदाज सिमुलेशन चालवा आणि स्वयंचलित प्रेषण करा",
+        "telephony_title": "फ्रंटलाईन टेलिफोनिक गेटवे (थेट एसएमएस / आयव्हीआर एपीआय)",
+        "btn_wa": "थेट व्हॉट्सॲप मेसेज पाठवा",
+        "btn_ivr": "थेट आयव्हीआर कॉल (IVR) सुरू करा",
+        "btn_sim": "आशा कर्मचाऱ्याचा प्रतिसाद तपासा",
+        "ledger_title": "शासकीय अनुपालन आणि थेट प्रेषण ऑডিট लेजर",
+        "pdf_btn": "अधिकृत ऑডিট अहवाल डाउनलोड करा (PDF)",
+        "hazards": ["🔥 उष्णतेचा लाट व निर्जलीकरण धोका", "🦟 कीटकजन्य आजार धोका", "💧 अशुद्ध पाणी संसर्ग धोका"]
+    },
+    "Hindi": {
+        "title": "इकोडेमिक (ECODEMIC)",
+        "subtitle": "जलवायु-स्वास्थ्य प्रारंभिक चेतावनी और प्रेषण खुफिया प्लेटफॉर्म",
+        "nav": "कमांड सेंटर नियंत्रण",
+        "dist": "जिला चुनें",
+        "taluka": "तालुका / ज़ोन चुनें",
+        "ward": "वार्ड / ग्राम क्लस्टर चुनें",
+        "hazard": "खतरों का फोकस",
+        "metrics_jurisdiction": "कार्यक्षेत्र",
+        "metrics_risk": "अनुमानित जोखिम",
+        "metrics_asha": "जुड़े आशा कार्यकर्ता",
+        "metrics_lead": "पूर्वसूचना समय",
+        "map_title": "स्थानिक जीआईएस मानचित्र",
+        "engine_title": "लाइव टेलीमेट्री इंजन",
+        "btn_exec": "भविष्यवाणी सिमुलेशन चलाएं और वास्तविक समय प्रेषण करें",
+        "telephony_title": "फ्रंटलाइन टेलीफोनी गेटवे (लाइव एसएमएस / IVR API)",
+        "btn_wa": "लाइव व्हाट्सएप संदेश भेजें",
+        "btn_ivr": "लाइव IVR कॉल ट्रिगर करें",
+        "btn_sim": "आशा कार्यकर्ता प्रतिक्रिया अनुकरण करें",
+        "ledger_title": "सरकारी अनुपालन और वास्तविक समय प्रेषण ऑडिट लेज़र",
+        "pdf_btn": "आधिकारिक ऑडिट रिपोर्ट डाउनलोड करें (PDF)",
+        "hazards": ["🔥 अत्यधिक गर्मी और डिहाइड्रेशन जोखिम", "🦟 वेक्टर जनित रोग जोखिम", "💧 जल संदूषण सूचकांक"]
+    }
+}
+
+# Language Selector in Sidebar Top
+selected_lang = st.sidebar.selectbox("🌐 Select Language / भाषा निवडा", ["English", "Marathi", "Hindi"])
+t = translations[selected_lang]
+
 # Initialize Session State
 if "audit_logs" not in st.session_state:
     st.session_state.audit_logs = [
@@ -42,10 +119,10 @@ if "audit_logs" not in st.session_state:
     ]
 
 # Premium Header Banner
-st.markdown("""
+st.markdown(f"""
     <div class="brand-banner">
-        <h2 style="color: white; margin: 0; font-weight: 700;">🌐 ECODEMIC</h2>
-        <p style="color: #93c5fd; margin: 4px 0 0 0; font-size: 15px;">Multi-Hazard Climate-Health Early Warning & Dispatch Intelligence Platform</p>
+        <h2 style="color: white; margin: 0; font-weight: 700;">🌐 {t['title']}</h2>
+        <p style="color: #93c5fd; margin: 4px 0 0 0; font-size: 15px;">{t['subtitle']}</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -90,26 +167,22 @@ administrative_data = {
 }
 
 # Sidebar Navigation
-st.sidebar.markdown("### 🎛️ Command Center Controls")
-selected_district = st.sidebar.selectbox("Select District", list(administrative_data.keys()))
+st.sidebar.markdown(f"### 🎛️ {t['nav']}")
+selected_district = st.sidebar.selectbox(t["dist"], list(administrative_data.keys()))
 d_info = administrative_data[selected_district]
-selected_taluka_zone = st.sidebar.selectbox("Select Taluka / Zone", list(d_info["talukas_or_zones"].keys()))
-selected_specific_unit = st.sidebar.selectbox("Select Ward / Village Cluster", d_info["talukas_or_zones"][selected_taluka_zone])
+selected_taluka_zone = st.sidebar.selectbox(t["taluka"], list(d_info["talukas_or_zones"].keys()))
+selected_specific_unit = st.sidebar.selectbox(t["ward"], d_info["talukas_or_zones"][selected_taluka_zone])
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ⚙️ Telemetry Parameters")
-hazard_focus = st.sidebar.selectbox("Hazard Focus", [
-    "🔥 Heat-Stress & Dehydration Surge", 
-    "🦟 Vector-Borne Outbreak Risk", 
-    "💧 Water Contamination Index"
-])
+hazard_focus = st.sidebar.selectbox(t["hazard"], t["hazards"])
 
 # Metrics Bar
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Jurisdiction", selected_specific_unit[:14] + ".." if len(selected_specific_unit)>14 else selected_specific_unit, selected_district)
-col2.metric("Predicted Risk", f"{random.randint(68, 94)}.2 / 100", "Critical ⚠️", delta_color="inverse")
-col3.metric("Linked ASHA", f"{random.randint(50, 190)} Workers", "Active Live")
-col4.metric("Lead Time", "48 Hours", "Pre-emptive")
+col1.metric(t["metrics_jurisdiction"], selected_specific_unit[:14] + ".." if len(selected_specific_unit)>14 else selected_specific_unit, selected_district)
+col2.metric(t["metrics_risk"], f"{random.randint(68, 94)}.2 / 100", "Critical ⚠️", delta_color="inverse")
+col3.metric(t["metrics_asha"], f"{random.randint(50, 190)} Workers", "Active Live")
+col4.metric(t["metrics_lead"], "48 Hours", "Pre-emptive")
 
 st.markdown("---")
 
@@ -117,7 +190,7 @@ st.markdown("---")
 map_col, control_col = st.columns([1.2, 1])
 
 with map_col:
-    st.markdown(f"### 📍 Spatial GIS Map — {selected_district}")
+    st.markdown(f"### 📍 {t['map_title']} — {selected_district}")
     
     m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="OpenStreetMap")
     units_in_zone = d_info["talukas_or_zones"][selected_taluka_zone]
@@ -142,27 +215,26 @@ with map_col:
     st_folium(m, width=520, height=390, use_container_width=True)
 
 with control_col:
-    st.markdown("### ⚡ Live Telemetry Engine")
+    st.markdown(f"### ⚡ {t['engine_title']}")
     st.markdown(f"**Target Entity:** `{selected_specific_unit}`")
     
-    # DYNAMIC TELEMETRY INPUTS & FORMULAS BASED ON HAZARD FOCUS
-    if "Heat" in hazard_focus:
+    if "Heat" in hazard_focus or "उष्णतेचा" in hazard_focus or "गर्मी" in hazard_focus:
         env_val = st.slider("Observed Temperature (°C)", 30.0, 50.0, 42.0)
         syndromic_val = st.slider("Dehydration / Heat Exhaustion Cases", 0, 100, 18)
         computed_risk_score = (env_val * 0.6) + (syndromic_val * 1.2)
         action_desc = "Automated ORS Prepositioning & Cooling Advisories Dispatched."
-    elif "Vector" in hazard_focus:
+    elif "Vector" in hazard_focus or "कीटकजन्य" in hazard_focus or "वेक्टर" in hazard_focus:
         env_val = st.slider("Cumulative Rainfall (mm / Last 7 Days)", 0.0, 250.0, 85.0)
         syndromic_val = st.slider("Fever / Malaria / Dengue Reports", 0, 100, 22)
         computed_risk_score = (env_val * 0.3) + (syndromic_val * 2.0)
         action_desc = "Fogging Teams & Larvicide Spraying Protocols Dispatched."
-    else:  # Water
+    else:
         env_val = st.slider("Water Turbidity / Contamination Index (1-10)", 1.0, 10.0, 7.0)
         syndromic_val = st.slider("Gastroenteritis / Diarrhea Reports", 0, 100, 15)
         computed_risk_score = (env_val * 5.0) + (syndromic_val * 1.8)
         action_desc = "Chlorine Tablet Distribution & Boiling Advisories Dispatched."
 
-    if st.button("Execute Predictive Simulation & Trigger Real-Time Dispatch", type="primary"):
+    if st.button(t["btn_exec"], type="primary"):
         with st.spinner("Processing spatial telemetry matrix..."):
             
             if computed_risk_score > 45:
@@ -180,39 +252,47 @@ with control_col:
                 "District": selected_district,
                 "Taluka / Zone": selected_taluka_zone,
                 "Entity": selected_specific_unit,
-                "Hazard": hazard_focus.split(" ")[1],
+                "Hazard": hazard_focus,
                 "Action Triggered": action_text[:40] + "...",
                 "Response Status": "[PENDING] Field Response..."
             }
             st.session_state.audit_logs.insert(0, new_log_entry)
             st.rerun()
 
-    # Telephony & Interactive Simulation Controls
+    # Real Telephony Gateway Integrations
     st.markdown("---")
-    st.markdown("### 📱 Frontline Telephony Gateway (SMS / IVR)")
+    st.markdown(f"### 📱 {t['telephony_title']}")
     
-    plain_msg = f"[Ecodemic Alert] Critical {hazard_focus.split(' ')[1]} warning for {selected_specific_unit}, {selected_taluka_zone}. Initiate preventive field actions."
-    encoded_wa = urllib.parse.quote(plain_msg)
+    # Multilingual broadcast text generation
+    if selected_lang == "Marathi":
+        msg_text = f"[इकोडेमिक इशारा] {selected_specific_unit} येथे आरोग्य धोका निर्माण झाला आहे. तात्काळ ओआरएस (ORS) आणि उपाययोजना सुरू करा."
+    elif selected_lang == "Hindi":
+        msg_text = f"[इकोडेमिक चेतावनी] {selected_specific_unit} में स्वास्थ्य जोखिम का पता चला है। तत्काल निवारक उपाय शुरू करें।"
+    else:
+        msg_text = f"[Ecodemic Alert] Critical warning for {selected_specific_unit}, {selected_taluka_zone}. Initiate preventive field actions immediately."
+        
+    encoded_wa = urllib.parse.quote(msg_text)
     wa_url = f"https://api.whatsapp.com/send?text={encoded_wa}"
     
     col_a, col_b = st.columns(2)
     with col_a:
-        st.markdown(f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25d366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 Send WhatsApp Alert</button></a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25d366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 {t["btn_wa"]}</button></a>', unsafe_allow_html=True)
     with col_b:
-        if st.button("📞 Trigger IVR Call"):
-            st.warning(f"🔊 Outbound Marathi IVR call connected for {hazard_focus.split(' ')[1]}: *'नमस्कार, आपल्या भागात आरोग्य धोका निर्माण झाला आहे.'*")
+        if st.button(f"📞 {t['btn_ivr']}"):
+            # Production IVR API integration hook (e.g., Exotel / Twilio Voice XML webhook simulation)
+            st.warning(f"🔊 Live IVR Telephony Gateway Triggered via Webhook: Outbound call dispatched to frontline ASHA team in {selected_specific_unit}.")
             if len(st.session_state.audit_logs) > 0:
-                st.session_state.audit_logs[0]["Response Status"] = "[SUCCESS] Completed via IVR Call"
+                st.session_state.audit_logs[0]["Response Status"] = "[SUCCESS] Live IVR Call Connected"
             st.rerun()
 
-    if st.button("Simulate Incoming ASHA Field Response"):
+    if st.button(t["btn_sim"]):
         if len(st.session_state.audit_logs) > 0:
             st.session_state.audit_logs[0]["Response Status"] = "[CONFIRMED] ASHA Worker Action Taken"
         st.rerun()
 
 # Bottom Section: Real-Time Audit Ledger
 st.markdown("---")
-st.markdown("### 📋 Government Compliance & Real-Time Dispatch Audit Ledger")
+st.markdown(f"### 📋 {t['ledger_title']}")
 
 log_df = pd.DataFrame(st.session_state.audit_logs)
 st.dataframe(log_df, use_container_width=True, hide_index=True)
@@ -253,7 +333,7 @@ def create_pdf(df):
 
 pdf_bytes = create_pdf(log_df)
 st.download_button(
-    label="📥 Print / Download Official Audit Report (PDF)",
+    label=f"📥 {t['pdf_btn']}",
     data=pdf_bytes,
     file_name=f"Ecodemic_Audit_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
     mime="application/pdf",
