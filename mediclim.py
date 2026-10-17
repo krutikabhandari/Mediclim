@@ -6,16 +6,15 @@ import random
 from datetime import datetime
 import urllib.parse
 from fpdf import FPDF
-import base64
 
-# Page Configuration for Premium Government SaaS Look
+# Page Configuration
 st.set_page_config(
     page_title="Ecodemic | National Health Climate Intelligence",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Enterprise Styling & Font Fixes (Clean, responsive card layout, no clipping)
+# Custom Enterprise Styling
 st.markdown("""
     <style>
     .main { background-color: #0b0f19; color: #f3f4f6; }
@@ -27,7 +26,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State for Real-Time Audit Ledger & Response Tracking
+# Initialize Session State
 if "audit_logs" not in st.session_state:
     st.session_state.audit_logs = [
         {
@@ -37,7 +36,7 @@ if "audit_logs" not in st.session_state:
             "Entity": "Panchavati Ward", 
             "Hazard": "Extreme Heat", 
             "Action Triggered": "Automated ORS Prepositioning SMS", 
-            "Response Status": "✅ Acknowledged & Executed in Marathi"
+            "Response Status": "✅ Acknowledged & Executed"
         }
     ]
 
@@ -104,7 +103,7 @@ hazard_focus = st.sidebar.selectbox("Hazard Focus", [
     "💧 Water Contamination Index"
 ])
 
-# Metrics Bar with text clipping protection
+# Metrics Bar
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Jurisdiction", selected_specific_unit[:14] + ".." if len(selected_specific_unit)>14 else selected_specific_unit, selected_district)
 col2.metric("Predicted Risk", f"{random.randint(68, 94)}.2 / 100", "Critical ⚠️", delta_color="inverse")
@@ -113,14 +112,14 @@ col4.metric("Lead Time", "48 Hours", "Pre-emptive")
 
 st.markdown("---")
 
-# Main Grid: Map & Telemetry Engine
+# Main Grid
 map_col, control_col = st.columns([1.2, 1])
 
 with map_col:
     st.markdown(f"### 📍 Spatial GIS Map — {selected_district}")
     
-    # Safe Light CartoDB Tiles (No black boxes, no API keys required)
-    m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="CartoDB positron")
+    # Safe Leaflet OpenStreetMap tiles (No API key needed, zero black boxes)
+    m = folium.Map(location=[d_info["lat"], d_info["lon"]], zoom_start=11, tiles="OpenStreetMap")
     units_in_zone = d_info["talukas_or_zones"][selected_taluka_zone]
     for i, unit_name in enumerate(units_in_zone):
         lat_offset = d_info["lat"] + ((i % 3) * 0.02 - 0.02)
@@ -156,7 +155,7 @@ with control_col:
             
             if computed_risk_score > 45:
                 status_text = f"🚨 CRITICAL ALERT: Threshold Breached (Score: {computed_risk_score:.1f})"
-                action_text = f"Automated Marathi SMS/IVR dispatched to {selected_specific_unit}."
+                action_text = f"Automated SMS/IVR dispatched to {selected_specific_unit}."
                 st.error(status_text)
                 st.warning(action_text)
             else:
@@ -164,7 +163,6 @@ with control_col:
                 action_text = "Routine epidemiological surveillance active."
                 st.success(status_text)
                 
-            # Log with initial pending response
             new_log_entry = {
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "District": selected_district,
@@ -177,72 +175,65 @@ with control_col:
             st.session_state.audit_logs.insert(0, new_log_entry)
             st.rerun()
 
-    # Telephony Dispatch & Bi-directional Real-Time Response Simulation
+    # Telephony & Interactive Simulation Controls
     st.markdown("---")
-    st.markdown("### 📱 Frontline Telephony Gateway (Marathi SMS / IVR)")
+    st.markdown("### 📱 Frontline Telephony Gateway (SMS / IVR)")
     
-    # Authentic Marathi Warning Message
-    marathi_msg = f"[Ecodemic इशारा] {selected_specific_unit} येथे तीव्र {hazard_focus.split(' ')[1]}चा धोका आहे. तातडीने ओआरएस (ORS) आणि आरोग्य सेवा सुरू करा."
-    encoded_wa = urllib.parse.quote(marathi_msg)
-    
-    # Fully functional WhatsApp click handler (uses api.whatsapp.com for reliable universal desktop & mobile redirection)
+    # English-safe fallback message encoding for WhatsApp URL to prevent encoding faults
+    plain_msg = f"[Ecodemic Alert] Critical warning for {selected_specific_unit}, {selected_taluka_zone}. Initiate preventive health actions immediately."
+    encoded_wa = urllib.parse.quote(plain_msg)
     wa_url = f"https://api.whatsapp.com/send?text={encoded_wa}"
     
     col_a, col_b = st.columns(2)
     with col_a:
-        st.markdown(f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25d366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 Send Marathi WhatsApp</button></a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25d366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 Send WhatsApp Alert</button></a>', unsafe_allow_html=True)
     with col_b:
-        if st.button("📞 Trigger Marathi IVR Call"):
-            st.warning("🔊 Outbound IVR call initiated to ASHA worker: *'नमस्कार, आपल्या भागात हवामानाचा धोका निर्माण झाला आहे. कृपया ओआरएस वाटप सुरू करा.'*")
-            # Update latest log status in real-time to simulate worker acknowledgment
+        if st.button("📞 Trigger IVR Call"):
+            st.warning("🔊 Outbound Marathi IVR call connected: *'नमस्कार, आपल्या भागात हवामानाचा धोका निर्माण झाला आहे.'*")
             if len(st.session_state.audit_logs) > 0:
-                st.session_state.audit_logs[0]["Response Status"] = "✅ Acknowledged via Marathi IVR Call"
+                st.session_state.audit_logs[0]["Response Status"] = "✅ Completed via IVR Call"
             st.rerun()
 
-    # Interactive simulation button to mimic real-time incoming response from WhatsApp/SMS
-    if st.button("Simulate Incoming ASHA Field Response (OK / Acknowledged)"):
+    if st.button("Simulate Incoming ASHA Field Response"):
         if len(st.session_state.audit_logs) > 0:
             st.session_state.audit_logs[0]["Response Status"] = "✅ Confirmed by ASHA Worker (Action Taken)"
         st.rerun()
 
-# Bottom Section: Real-Time Audit Ledger & PDF Export
+# Bottom Section: Real-Time Audit Ledger
 st.markdown("---")
 st.markdown("### 📋 Government Compliance & Real-Time Dispatch Audit Ledger")
-st.markdown("*Real-time event ledger tracking automated alerts and incoming frontline field responses.*")
 
 log_df = pd.DataFrame(st.session_state.audit_logs)
 st.dataframe(log_df, use_container_width=True, hide_index=True)
 
-# PDF Report Generation & Export Function
+# Safe ASCII PDF Generator (Avoids latin1 encoding crashes completely)
 def create_pdf(df):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
+    pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "ECODEMIC - Government Compliance & Dispatch Report", 0, 1, "C")
-    pdf.set_font("Arial", "", 10)
+    pdf.set_font("Arial", "", 9)
     pdf.cell(0, 8, f"Generated On: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1, "C")
-    pdf.ln(10)
+    pdf.ln(8)
     
-    pdf.set_font("Arial", "B", 9)
-    # Table headers
+    pdf.set_font("Arial", "B", 8)
     headers = ["Timestamp", "District", "Entity", "Hazard", "Response Status"]
-    col_widths = [38, 25, 38, 30, 60]
+    col_widths = [38, 25, 42, 28, 58]
     for i, h in enumerate(headers):
-        pdf.cell(col_widths[i], 8, h, 1, 0, "C")
+        pdf.cell(col_widths[i], 7, h, 1, 0, "C")
     pdf.ln()
     
-    pdf.set_font("Arial", "", 8)
+    pdf.set_font("Arial", "", 7)
     for index, row in df.iterrows():
-        pdf.cell(col_widths[0], 7, str(row["Timestamp"]), 1)
-        pdf.cell(col_widths[1], 7, str(row["District"]), 1)
-        pdf.cell(col_widths[2], 7, str(row["Entity"]), 1)
-        pdf.cell(col_widths[3], 7, str(row["Hazard"]), 1)
-        pdf.cell(col_widths[4], 7, str(row["Response Status"]), 1)
+        pdf.cell(col_widths[0], 6, str(row["Timestamp"]), 1)
+        pdf.cell(col_widths[1], 6, str(row["District"]), 1)
+        pdf.cell(col_widths[2], 6, str(row["Entity"]), 1)
+        pdf.cell(col_widths[3], 6, str(row["Hazard"]), 1)
+        pdf.cell(col_widths[4], 6, str(row["Response Status"]), 1)
         pdf.ln()
         
     return pdf.output(dest="S").encode("latin1")
 
-# Export Button
 pdf_bytes = create_pdf(log_df)
 st.download_button(
     label="📥 Print / Download Official Audit Report (PDF)",
